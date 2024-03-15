@@ -2,45 +2,61 @@
 % compare to kenny's code
 % better math/optimization from paper
 % graphing functions
+% amplitude optimization?
 
-clear all; %clear workspace of variables
+clear all; % clear workspace of variables
+%close all; % close all windows
+%clc; % clear the console
 
-bounds={[-0.1 0.1],[-0.1 0.1],[-0.1 0.1]}; %set bounds of the work area
-render_bounds={[0 0.02],[-0.02 0.02],[-0.02 0.02]}; %set bounds of the render area
+f = 40000;
+g           = 1.4;
+R           = 8314/28.97;
+Tf          = 70;
+T           = (Tf-32)/1.8 + 273.15;
+a      = sqrt(1.4*R*T);
+global lambda;
+lambda = a / f;
+
+
+bounds={[-0.16 0.16],[-0.16 0.16],[-0.16 0.16]}; %set bounds of the work area
 
 % define transducer locations
-%[X,Y,Z] = transducer_grid(4, 4, bounds); % grid layout
-%[X,Y,Z] = transducer_sphere_alt(); % sphere layout
-%[X,Y,Z] = deal([0 0],[0 0],[-10*0.0086 10*0.0086]); % define transducer locations manually
-%[X,Y,Z] = rotate(X,Y,Z, 0, 0, 0);
-[X,Y,Z] = platePoints2();
+%[X,Y,Z] = deal([0 0],[0 0],[-0.1 0.1]); % define transducer locations manually
+[X,Y,Z] = transducer_grid(16, 16, bounds); % grid layout
+%[X,Y,Z] = transducer_sphere(3, 0.1); % sphere layout
+%[X,Y,Z] = plate_points(); % place transducers in concentric rings
+
+% transform locations
+%[X,Y,Z] = translate(X, Y, Z, 0, 0, 0);
+%[X,Y,Z] = rotate(X, Y, Z, 0, 0, 0);
 
 % define transducer normal vectors
-%[U,V,W] = inwards_z(Z); % point up/down
-[U,V,W] = inwards_r(X,Y,Z); % point towards center
-%[X,Y,Z] = translate(X, Y, Z, 0, 0, 0);
+[U,V,W] = inwards_z(Z); % point up/down
+%[U,V,W] = inwards_r(X,Y,Z); % point towards center
 
-O = [0 0 0]; % point at which phases will be optimized
+[ox, oy, oz] = deal([0 0 0 0 -0.01 0.01], [-0.01 0.01 0 0 0 0], [0 0 -0.01 0.01 0 0]);
+%[ox, oy, oz] = transducer_sphere(5, 0.01);
 
 phi=X*0;
-%phi(1)=pi;
-options = optimset('MaxFunEvals',10000,'MaxIter',10000,'Display','final','PlotFcns',@optimplotfval);
-%phi=fminsearch(@(phases) pressure_field(phases, X, Y, Z, U, V, W, O(1), O(2), O(3)), phi, options);
-
+options = optimset('MaxFunEvals',100000,'MaxIter',10000,'Display','final','PlotFcns',@optimplotfval);
+%options = optimset('MaxFunEvals',10000,'MaxIter',10000);
+phi=fminunc(@(phases) obj_func(phases, X, Y, Z, U, V, W, ox, oy, oz), phi, options);
+%phi=mod(phi,2*pi);
 
 %% COMPUTE PRESSURES
 
+slice_axes={[0 NaN NaN 1], [NaN 0 NaN 1]};
+render_bounds={[0 0.02],[-0.02 0.02],[-0.02 0.02]};
 slice_axes={};
-%slice_axes={[0 NaN NaN 1]};
-%output=render_slices(slice_axes, 1000, bounds,phi,X,Y,Z,U,V,W);
+%render_bounds={};
 
-output={render_volume(100, render_bounds, phi, X, Y, Z, U, V, W)};
-
+slice_data=render_slices(slice_axes, 400, bounds,phi,X,Y,Z,U,V,W);
+volume_data=render_volumes(100, render_bounds, phi, X, Y, Z, U, V, W);
 
 %% PLOTTING
-
 f=figure('Name','Phased Array Sim','NumberTitle','off');
-scatter3(X,Y,Z,200,phi,'filled','MarkerFaceAlpha',0.4);
+scatter3(X,Y,Z,200,phi*100,'filled','MarkerFaceAlpha',0.4);
+
 xlabel('x (m)')
 ylabel('y (m)')
 zlabel('z (m)')
@@ -48,30 +64,36 @@ xlim(bounds{1})
 ylim(bounds{2})
 zlim(bounds{3})
 hold on
-scatter3(O(1),O(2),O(3),100,'black');
+%scatter3(ox,oy,oz,10,'black','filled','MarkerFaceAlpha',1);
+
+%scatter3(ox,oy,oz,100,'black');
 quiver3(X,Y,Z,U,V,W,0.4,LineWidth=1,AutoScale="off",Color="black");
 colormap(jet)
 
-for i=1:numel(slice_axes)
-    s=slice(output{i}{1},output{i}{2},output{i}{3},log10(output{i}{4}),slice_axes{i}(1),slice_axes{i}(2),slice_axes{i}(3),'nearest');
+for i=1:numel(slice_axes) %log10 for log pressure
+    s=slice(slice_data{i}{1},slice_data{i}{2},slice_data{i}{3},slice_data{i}{4},slice_axes{i}(1),slice_axes{i}(2),slice_axes{i}(3),'nearest');
     alpha(s,slice_axes{i}(4))
+    material(s, "dull")
 end
 
 shading("interp")
 cb=colorbar;
-ylabel(cb,'Log Pressure [ log10(Pa) ] | Phase [ rad ]','FontSize',11,'Rotation',270)
+ylabel(cb,'Pressure [ Pa ] | Phase [ rad ]','FontSize',11,'Rotation',270)
 hold off
 daspect([1 1 1])
 set(gcf,'Color',[1 1 1])
 
-isoval=300;
-p1=patch(isosurface(output{1}{1},output{1}{2},output{1}{3},output{1}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp','LineStyle', 'none');
-patch(isocaps(output{1}{1},output{1}{2},output{1}{3},output{1}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp', 'LineStyle', 'none');
-camlight left;
-camlight right;
-lighting gouraud;
-isonormals(output{1}{1},output{1}{2},output{1}{3},output{1}{4},p1);
-isocolors(output{1}{1},output{1}{2},output{1}{3},output{1}{4},p1);
+for i=1:numel(render_bounds)
+    isoval=110;
+    p1=patch(isosurface(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp','LineStyle', 'none');
+    patch(isocaps(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp', 'LineStyle', 'none');
+    isonormals(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4},p1);
+    isocolors(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4},p1);
+
+    light("Position",[-1 0 0],"Style","infinite")
+    light("Position",[1 0 0],"Style","infinite")
+    lighting gouraud;
+end
 
 % f=figure;
 % colormap(hot);
@@ -79,10 +101,13 @@ isocolors(output{1}{1},output{1}{2},output{1}{3},output{1}{4},p1);
 % I=imagesc(graph_slice,'Interpolation','bilinear');
 
 
-function output = render_volume(res, bounds, phi, X, Y, Z, U, V, W)
-    slice_range={linspace(bounds{1}(1),bounds{1}(2),res), linspace(bounds{2}(1),bounds{2}(2),res), linspace(bounds{3}(1),bounds{3}(2),res)};
-    [x_grid,y_grid,z_grid]=meshgrid(slice_range{1},slice_range{2},slice_range{3});
-    output={x_grid, y_grid, z_grid, abs(pressure_field(phi,X,Y,Z,U,V,W,x_grid,y_grid,z_grid))};
+function output = render_volumes(res, bounds, phi, X, Y, Z, U, V, W)
+    output={};
+    for i=1:numel(bounds)
+        slice_range={linspace(bounds{1}(1),bounds{1}(2),res), linspace(bounds{2}(1),bounds{2}(2),res), linspace(bounds{3}(1),bounds{3}(2),res)};
+        [x_grid,y_grid,z_grid]=meshgrid(slice_range{1},slice_range{2},slice_range{3});
+        output{i}={x_grid, y_grid, z_grid, abs(gather(pressure_field(phi,X,Y,Z,U,V,W,x_grid,y_grid,z_grid)))};
+    end
 end
 
 
@@ -108,28 +133,32 @@ function output = render_slices(slice_axes, slice_res, bounds, phi, X, Y, Z, U, 
     end
 end
 
+function loss = obj_func(phases,tx, ty, tz, U, V, W, points_x, points_y, points_z)
+    loss = -1*sum(pressure_field(phases,tx, ty, tz, U, V, W, points_x, points_y, points_z));
+end
 
-function P_field = pressure_field(phases,transducers_x, transducers_y, transducers_z, U, V, W, points_x, points_y, points_z)
+function P_field = pressure_field(phases,tx, ty, tz, U, V, W, points_x, points_y, points_z)
     % define system parameters
 
     A=1; %signal amplitude
     P0=2.4; %transducer amplitude power
-    a=0.016*pi; %piston radius CHANGE LATER
-    lambda=0.0086; %wavelength of sound in air (m)
-
+    a=0.016; %piston radius CHANGE LATER *pi?
+    global lambda;
     k=2*pi/lambda; %wavenumber
     
-    [p_i, t_i] = meshgrid(linspace(1, numel(points_x), numel(points_x)), linspace(1, numel(transducers_x), numel(transducers_x)));
+    
+    [p_i, t_i] = meshgrid(linspace(1, numel(points_x), numel(points_x)), linspace(1, numel(tx), numel(tx)));
 
     p_i=gpuArray(p_i);
     t_i=gpuArray(t_i);
 
-    P_field=reshape(abs(sum(arrayfun(@point_pressure, p_i, t_i),1)), size(points_x, 1), size(points_x, 2), []);
+    P_field=reshape(abs(sum(arrayfun(@point_pressure, p_i, t_i),1,"omitnan")), size(points_x, 1), size(points_x, 2), []);
+    P_field=gather(P_field);
 
     function p = point_pressure(p_i, t_i)
-        b_x=points_x(p_i)-transducers_x(t_i);
-        b_y=points_y(p_i)-transducers_y(t_i);
-        b_z=points_z(p_i)-transducers_z(t_i);
+        b_x=points_x(p_i)-tx(t_i);
+        b_y=points_y(p_i)-ty(t_i);
+        b_z=points_z(p_i)-tz(t_i);
         
         d=sqrt(b_x^2+b_y^2+b_z^2);
 
@@ -145,83 +174,30 @@ function P_field = pressure_field(phases,transducers_x, transducers_y, transduce
     end
 end
 
-
-function point_pressure = objective_func2(phi, X, Y, Z, U, V, W, x, y, z)
-    A=1; %signal amplitude
-    P0=2.4; %transducer amplitude power
-    a=0.01; %piston radius CHANGE LATER
-    lambda=0.0086; %wavelength of sound in air (m)
-
-    k=2*pi/lambda; %wavenumber
-    
-    b=[x-X; y-Y; z-Z];
-    d=vecnorm(b,2,1);
-    sine_func=vecnorm(cross(b, [U; V; W]),2,1)./d;
-    Df=sinc(k*a*sine_func);
-    P=P0*A*Df.*exp(1i*(phi+k*d))./d;
-    point_pressure=abs(sum(P));
-end
-
-
-function U = gorkov(complex_pressure)
-    r=0.001; %radius of droplet (m)
-    V=pi*r^2; %volume of particle
-    c0=343; %speed of sound in air
-    rho0=1.18; %density of air (Kg/m^3)
-    cs=900; %speed of sound in droplet
-    rhos=1000; %density of water
-    omega=40000; %wave frequency
-
-    K1 =(1/4)*V*((1/(c0^2*rho0))-(1/(cs^2*rhos)));
-    K2 =(3/4)*V*((rho0-rhos)/(omega^2*rho0*(rho0+2*rhos)));
-    
-    P_mag=abs(complex_pressure);
-    [px,py,pz]=gradient(complex_pressure);
-    U = K1 * P_mag .^2 - K2 * (abs(px) .^2 + abs(py) .^2 + abs(pz) .^ 2);
-end
-
-
-function obj_func = objective_func(phases,transducers_x, transducers_y, transducers_z, U, V, W, points_x, points_y, points_z)
-    w=0;
-    s=10^10;
-    complex_pressure=pressure_field(phases,transducers_x, transducers_y, transducers_z, U, V, W, points_x, points_y, points_z);
-    gorkov_potentials=gorkov(complex_pressure);
-
-    P_mag=abs(complex_pressure);
-    obj_func=sum(w*P_mag-s*del2(gorkov_potentials),"all");
-end
-
-
-function [transducers_x, transducers_y, transducers_z] = transducer_grid(num_x, num_y, bounds)
+function [tx, ty, tz] = transducer_grid(num_x, num_y, bounds)
     x=linspace(bounds{1}(1),bounds{1}(2),num_x);
     y=linspace(bounds{2}(1),bounds{2}(2),num_y);
-    [transducers_x,transducers_y]=meshgrid(x,y);
-    transducers_x=horzcat(transducers_x,transducers_x);
-    transducers_y=horzcat(transducers_y,transducers_y);
-    z_bottom=bounds{3}(1)*ones(length(x),length(y));
-    z_top=bounds{3}(2)*ones(length(x),length(y));
-    transducers_z=horzcat(z_bottom,z_top);
+    [tx,ty]=meshgrid(x,y);
     
-    transducers_x=transducers_x(:);
-    transducers_y=transducers_y(:);
-    transducers_z=transducers_z(:);
+    tz=bounds{3}(1)*ones(length(x),length(y));
+
+    % tz=[tz -tz];
+    % tx=[tx tx];
+    % ty=[ty ty];
+    
+    tx=tx(:);
+    ty=ty(:);
+    tz=tz(:);
 end
 
-function [transducers_x, transducers_y, transducers_z] = transducer_sphere(bounds)
-    [transducers_x, transducers_y, transducers_z]=sphere(7);
-    transducers_x=transducers_x(:)*bounds{1}(2);
-    transducers_y=transducers_y(:)*bounds{1}(2);
-    transducers_z=transducers_z(:)*bounds{1}(2);
-end
 
-function [tx, ty, tz] = transducer_sphere_alt()
+
+function [tx, ty, tz] = transducer_sphere(num_rings, r)
     [tx, ty, tz] = deal([],[],[]);
     
-    num_rings=3;
-    r=0.1;
     start_theta=pi/12;
     d_theta=pi/12;
-    phi_spacing=0.023;
+    phi_spacing=0.23*r;
 
     for ring_num=0:num_rings-1
         theta=start_theta+ring_num*d_theta;
@@ -243,44 +219,20 @@ function [tx, ty, tz] = transducer_sphere_alt()
     tz=[tz -tz];
 end
 
-function [tx, ty, tz] = platePoints()
+function [tx, ty, tz] = plate_points()
     [tx, ty, tz] = deal([],[],[]);
 
-    res=30;
-    [x_vals, y_vals] = meshgrid(linspace(-0.1,0.1,res), linspace(-0.1,0.1,res));
+    num_rings=2;
+    spacing=0.0165;
     z=0.1;
-    lambda=0.0086;
-
-    for i=1:numel(x_vals)
-        x=x_vals(i);
-        y=y_vals(i);
-        dist=sqrt(x^2+y^2+z^2);
-        if mod(dist, lambda) < 0.001
-            tx=[tx x];
-            ty=[ty y];
-        end
-    end
-    tz=repelem(z, numel(tx));
-
-    tx=[tx tx];
-    ty=[ty ty];
-    tz=[tz -tz];
-end
-
-function [tx, ty, tz] = platePoints2()
-    [tx, ty, tz] = deal([],[],[]);
-
-    num_rings=3;
-    spacing=0.02;
-    z=0.1;
-    lambda=0.0086;
-    d_start=lambda*12.5;
+    global lambda;
+    d_start=z+0.004;
 
     for ring_num=0:num_rings-1
-        d=d_start+ring_num*lambda*1;
-        r=sqrt(d^2-z^2);
+        d=d_start+ring_num*lambda;
+        r=sqrt(d^2-z^2)
         circ=2*pi*r;
-        num_trans=floor(circ/spacing);
+        num_trans=floor(circ/spacing)
         thetas=linspace(0,2*pi,num_trans);
         
         x=r*cos(thetas);
