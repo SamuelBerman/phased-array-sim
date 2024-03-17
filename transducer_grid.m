@@ -5,9 +5,9 @@ function [tx, ty, tz] = transducer_grid(num_x, num_y, bounds)
     
     tz=bounds{3}(1)*ones(length(x),length(y));
 
-    % tz=[tz -tz];
-    % tx=[tx tx];
-    % ty=[ty ty];
+    tz=[tz -tz];
+    tx=[tx tx];
+    ty=[ty ty];
     
     tx=tx(:);
     ty=ty(:);

@@ -38,15 +38,15 @@ bounds={[-0.1 0.1],[-0.1 0.1],[-0.1 0.1]}; %set bounds of the work area
 phi=X*0;
 options = optimset('MaxFunEvals',100000,'MaxIter',10000,'Display','final','PlotFcns',@optimplotfval);
 %options = optimset('MaxFunEvals',10000,'MaxIter',10000);
-%phi=fminunc(@(phases) obj_func(phases, X, Y, Z, U, V, W, ox, oy, oz, lambda), phi, options);
+phi=fminunc(@(phases) obj_func(phases, X, Y, Z, U, V, W, ox, oy, oz, lambda), phi, options);
 %phi=mod(phi,2*pi);
 
 %% COMPUTE PRESSURES
 
-slice_axes={[NaN NaN 0 0.5]};
+slice_axes={[0 NaN NaN 1]};
 render_bounds={[0 0.02],[-0.02 0.02],[-0.02 0.02]};
 %slice_axes={};
-%render_bounds={};
+render_bounds={};
 
 slice_data=render_slices(slice_axes, 400, bounds,phi,X,Y,Z,U,V,W, lambda);
 volume_data=render_volumes(100, render_bounds, phi, X, Y, Z, U, V, W, lambda);
@@ -63,8 +63,6 @@ ylim(bounds{2})
 zlim(bounds{3})
 hold on
 %scatter3(ox,oy,oz,10,'black','filled','MarkerFaceAlpha',1);
-
-light("Position",[0 0 1],"Style","infinite")
 
 %scatter3(ox,oy,oz,100,'black');
 quiver3(X,Y,Z,U,V,W,0.4,LineWidth=1,AutoScale="off",Color="black");
@@ -84,7 +82,7 @@ daspect([1 1 1])
 set(gcf,'Color',[1 1 1])
 
 for i=1:numel(render_bounds)
-    isoval=300;
+    isoval=110;
     p1=patch(isosurface(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp','LineStyle', 'none');
     patch(isocaps(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp', 'LineStyle', 'none');
     isonormals(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4},p1);
