@@ -22,6 +22,6 @@ Phased array sim can display multiple slices and volumes at once, each with cust
 
 ![img5](images/img5.png)
 
-This tool uses the following papers by @upnalab and @asiermarzo as the basis for pressure field calculations. 
-[Holographic acoustic elements for manipulation of levitated objects](https://www.nature.com/articles/ncomms9661)
+This tool uses the following papers by [@upnalab](https://github.com/upnalab/) and [@asiermarzo](https://github.com/asiermarzo) as the basis for pressure field calculations.  
+[Holographic acoustic elements for manipulation of levitated objects](https://www.nature.com/articles/ncomms9661)  
 [Ultraino: An Open Phased-Array System for Narrowband Airborne Ultrasound Transmission](https://ieeexplore.ieee.org/document/8094247)
