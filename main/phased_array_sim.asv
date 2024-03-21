@@ -26,17 +26,17 @@ phi=X*0;
 
 
 
-
-%options = optimset('MaxFunEvals',100000,'MaxIter',10000,'Display','final','PlotFcns',@optimplotfval);
+params_start = [X,Y,theta_angle,phi_angle];
+options = optimset('MaxFunEvals',100000,'MaxIter',10000,'Display','final','PlotFcns',@optimplotfval);
 %options = optimset('MaxFunEvals',10000,'MaxIter',10000);
 %phi=fminunc(@(phases) obj_func(phases, X, Y, Z, U, V, W, ox, oy, oz, lambda), phi, options);
 
-% params_start = [X,Y,theta_angle,phi_angle];
-% params_optimized=fminsearch(@(params) obj_func(phi, params(:,1), params(:,2), Z, params(:,3), params(:,4), ox, oy, oz, lambda), params_start, options);
-% X=params_optimized(:,1);
-% Y=params_optimized(:,2);
-% theta_angle=params_optimized(:,3);
-% phi_angle=params_optimized(:,4);
+
+params_optimized=fminsearch(@(params) obj_func(phi, params(:,1), params(:,2), Z, params(:,3), params(:,4), ox, oy, oz, lambda), params_start, options);
+X=params_optimized(:,1);
+Y=params_optimized(:,2);
+theta_angle=params_optimized(:,3);
+phi_angle=params_optimized(:,4);
 
 
 prob_func = @(X_,Y_,theta_angle_,phi_angle_) obj_func(phi, X_, Y_, Z, theta_angle_, phi_angle_, ox, oy, oz, lambda);
@@ -45,11 +45,11 @@ Y_ = optimvar("Y_");
 theta_angle_ = optimvar("theta_angle_");
 phi_angle_ = optimvar("phi_angle_");
 prob = optimproblem("Objective",prob_func(X_,Y_,theta_angle_,phi_angle_));
-params_start.X_ = X;
-params_start.Y_ = Y;
-params_start.theta_angle_ = theta_angle;
-params_start.phi_angle_ = phi_angle;
-[solf,fvalf,eflagf,outputf] = solve(prob, params_start);
+params_start.X = X;
+params_start.Y = Y;
+params_start.theta_angle = theta_angle;
+params_start.phi_angle = phi_angle;
+[X,Y,theta_angle,phi_angle] = solve(prob, params_start)
 
 
 

@@ -1,7 +1,6 @@
-function [tx, ty, tz] = plate_points(lambda)
+function [tx, ty, tz] = plate_points(lambda, num_rings, num_trans_arr)
     [tx, ty, tz] = deal([],[],[]);
 
-    num_rings=2;
     spacing=0.0165;
     z=0.1;
     d_start=z+0.004;
@@ -10,8 +9,12 @@ function [tx, ty, tz] = plate_points(lambda)
         d=d_start+ring_num*lambda;
         r=sqrt(d^2-z^2);
         circ=2*pi*r;
-        num_trans=floor(circ/spacing);
-        thetas=linspace(0,2*pi,num_trans);
+        if isempty(num_trans_arr)
+            num_trans=floor(circ/spacing);
+        else
+            num_trans=num_trans_arr(ring_num+1);
+        end
+        thetas=linspace(0,2*pi,num_trans+1);
         
         x=r*cos(thetas);
         y=r*sin(thetas);
