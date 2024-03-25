@@ -1,6 +1,6 @@
 function plot_data(X,Y,Z,bounds,slice_axes,slice_data, render_bounds,volume_data,phi,U,V,W,ox,oy,oz)
     figure('Name','Phased Array Sim','NumberTitle','off');
-    scatter3(X,Y,Z,200,phi*100,'filled','MarkerFaceAlpha',0.4);
+    scatter3(X,Y,Z,200,phi*30,'filled','MarkerFaceAlpha',0.4);
     
     xlabel('x (m)')
     ylabel('y (m)')

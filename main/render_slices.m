@@ -1,4 +1,4 @@
-function output = render_slices(slice_axes, slice_res, bounds, phi, X, Y, Z, U, V, W, lambda)
+function output = render_slices(slice_axes, slice_res, bounds, phi, X, Y, Z, U, V, W, lambda, a)
     output={};
     for i=1:numel(slice_axes)
         for j=1:3
@@ -8,7 +8,7 @@ function output = render_slices(slice_axes, slice_res, bounds, phi, X, Y, Z, U, 
 
                 slice_range{j}=slice_coord;
                 [x_grid,y_grid,z_grid]=meshgrid(slice_range{1},slice_range{2},slice_range{3});
-                pressures=abs(pressure_field(phi,X,Y,Z,U,V,W,x_grid,y_grid,z_grid, lambda));
+                pressures=abs(pressure_field(phi,X,Y,Z,U,V,W,x_grid,y_grid,z_grid, lambda, a));
 
                 slice_range{j}=linspace(slice_coord,slice_coord+0.0001,2);
                 [x_grid,y_grid,z_grid]=meshgrid(slice_range{1},slice_range{2},slice_range{3});

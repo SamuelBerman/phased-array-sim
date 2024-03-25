@@ -1,9 +1,9 @@
-function P_field = pressure_field(phases,tx, ty, tz, U, V, W, points_x, points_y, points_z, lambda)
+function P_field = pressure_field(phases,tx, ty, tz, U, V, W, points_x, points_y, points_z, lambda, a)
 
     % define system parameters
     A=1; %signal amplitude
     P0=2.4; %transducer amplitude power
-    a=0.016; %piston radius CHANGE LATER *pi?
+    %a=0.016; piston radius CHANGE LATER *pi?
     k=2*pi/lambda; %wavenumber
     
     
