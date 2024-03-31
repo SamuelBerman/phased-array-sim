@@ -1,4 +1,4 @@
-function plot_data(X,Y,Z,bounds,slice_axes,slice_data, render_bounds,volume_data,phi,U,V,W,ox,oy,oz)
+function plot_data(X,Y,Z,bounds,slice_axes,slice_data, render_bounds,volume_data,phi,U,V,W,ox,oy,oz, isoval)
     figure('Name','Phased Array Sim','NumberTitle','off');
     scatter3(X,Y,Z,200,phi*30,'filled','MarkerFaceAlpha',0.4);
     
@@ -28,7 +28,6 @@ function plot_data(X,Y,Z,bounds,slice_axes,slice_data, render_bounds,volume_data
     set(gcf,'Color',[1 1 1])
     
     for i=1:numel(render_bounds)
-        isoval=300;
         p1=patch(isosurface(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp','LineStyle', 'none');
         patch(isocaps(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4}, isoval), 'FaceAlpha', 1,'FaceColor', 'interp', 'LineStyle', 'none');
         isonormals(volume_data{i}{1},volume_data{i}{2},volume_data{i}{3},volume_data{i}{4},p1);
