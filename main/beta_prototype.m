@@ -1,7 +1,8 @@
 clear all;
 
 lambda = get_lambda(70);
-a=0.008;
+a=0.007;
+a=0.5;
 
 bounds={[-0.1 0.1],[-0.1 0.1],[-0.1 0.1]};
 
@@ -9,13 +10,13 @@ bounds={[-0.1 0.1],[-0.1 0.1],[-0.1 0.1]};
 
 [U,V,W] = inwards_r(X,Y,Z);
 
-[ox, oy, oz] = deal([0], [-0.02], [0]);
+[ox, oy, oz] = deal([0], [0.02], [0]);
 
 phi=X*0;
 
 [theta_angle, phi_angle] = vec_to_angles(U,V,W);
 options = optimset('MaxFunEvals',100000,'MaxIter',10000,'Display','final','PlotFcns',@optimplotfval);
-%phi=fminunc(@(phases) obj_func(phases, X, Y, Z, theta_angle, phi_angle, ox, oy, oz, lambda, a), phi, options);
+phi=fminunc(@(phases) -1*obj_func(phases, X, Y, Z, theta_angle, phi_angle, ox, oy, oz, lambda, a), phi, options);
 
 %% COMPUTE PRESSURES
 
@@ -30,4 +31,4 @@ slice_data=render_slices(slice_axes, 500, slice_bounds,phi,X,Y,Z,U,V,W, lambda, 
 volume_data=render_volumes(100, render_bounds, phi, X, Y, Z, U, V, W, lambda, a);
 
 %% PLOTTING
-plot_data(X,Y,Z,bounds,slice_axes,slice_data, render_bounds,volume_data,phi,U,V,W,ox,oy,oz);
+plot_data(X,Y,Z,bounds,slice_axes,slice_data, render_bounds,volume_data,phi*100,U,V,W,ox,oy,oz);

@@ -14,7 +14,7 @@ function [tx, ty, tz] = plate_points(lambda, num_rings, num_trans_arr)
         else
             num_trans=num_trans_arr(ring_num+1);
         end
-        thetas=linspace(0,2*pi,num_trans+1);
+        thetas=linspace(0,2*pi-2*pi/num_trans,num_trans);
         
         x=r*cos(thetas);
         y=r*sin(thetas);
